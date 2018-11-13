@@ -2,7 +2,7 @@
 
 <p align="center">
    <a href="https://bintray.com/jessyancoding/maven/autosize/_latestVersion">
-    <img src="https://img.shields.io/badge/Jcenter-v1.0.5-brightgreen.svg?style=flat-square" alt="Latest Stable Version" />
+    <img src="https://img.shields.io/badge/Jcenter-v1.0.6-brightgreen.svg?style=flat-square" alt="Latest Stable Version" />
   </a>
   <a href="https://travis-ci.org/JessYanCoding/AndroidAutoSize">
     <img src="https://travis-ci.org/JessYanCoding/AndroidAutoSize.svg?branch=master" alt="Build Status" />
@@ -76,7 +76,7 @@
 
 ## Download
 ``` gradle
- implementation 'me.jessyan:autosize:1.0.5'
+ implementation 'me.jessyan:autosize:1.0.6'
 ```
 
 ## Usage
@@ -186,10 +186,6 @@ AutoSizeConfig.getInstance().getUnitsManager()
         .setSupportSP(false)
         .setSupportSubunits(Subunits.MM);
 ```
-
-
-## Donate
-![alipay](https://raw.githubusercontent.com/JessYanCoding/MVPArms/master/image/pay_alipay.jpg) ![](https://raw.githubusercontent.com/JessYanCoding/MVPArms/master/image/pay_wxpay.jpg)
 
 ## About Me
 * **Email**: <jess.yan.effort@gmail.com>
