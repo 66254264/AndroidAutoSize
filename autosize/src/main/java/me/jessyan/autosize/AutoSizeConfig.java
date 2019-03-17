@@ -26,6 +26,8 @@ import android.content.res.Resources;
 import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
 
+import java.lang.reflect.Field;
+
 import me.jessyan.autosize.external.ExternalAdaptManager;
 import me.jessyan.autosize.unit.UnitsManager;
 import me.jessyan.autosize.utils.LogUtils;
@@ -87,6 +89,12 @@ public final class AutoSizeConfig {
      */
     private int mScreenHeight;
     /**
+     * 状态栏高度, 当 {@link #isUseDeviceSize} 为 {@code false} 时, AndroidAutoSize 会将 {@link #mScreenHeight} 减去状态栏高度
+     * AndroidAutoSize 默认使用 {@link ScreenUtils#getStatusBarHeight()} 方法获取状态栏高度
+     * AndroidAutoSize 使用者可使用 {@link #setStatusBarHeight(int)} 自行设置状态栏高度
+     */
+    private int mStatusBarHeight;
+    /**
      * 为了保证在不同高宽比的屏幕上显示效果也能完全一致, 所以本方案适配时是以设计图宽度与设备实际宽度的比例或设计图高度与设备实际高度的比例应用到
      * 每个 View 上 (只能在宽度和高度之中选一个作为基准), 从而使每个 View 的高和宽用同样的比例缩放, 避免在与设计图高宽比不一致的设备上出现适配的 View 高或宽变形的问题
      * {@link #isBaseOnWidth} 为 {@code true} 时代表以宽度等比例缩放, {@code false} 代表以高度等比例缩放
@@ -124,6 +132,14 @@ public final class AutoSizeConfig {
      * 如果为 {@code false}, 则会跟随系统设置中字体大小的改变, 默认为 {@code false}
      */
     private boolean isExcludeFontScale;
+    /**
+     * 是否是 Miui 系统
+     */
+    private boolean isMiui;
+    /**
+     * Miui 系统中的 mTmpMetrics 字段
+     */
+    private Field mTmpMetricsField;
     /**
      * 屏幕适配监听器，用于监听屏幕适配时的一些事件
      */
@@ -189,6 +205,7 @@ public final class AutoSizeConfig {
         int[] screenSize = ScreenUtils.getScreenSize(application);
         mScreenWidth = screenSize[0];
         mScreenHeight = screenSize[1];
+        mStatusBarHeight = ScreenUtils.getStatusBarHeight();
         LogUtils.d("designWidthInDp = " + mDesignWidthInDp + ", designHeightInDp = " + mDesignHeightInDp + ", screenWidth = " + mScreenWidth + ", screenHeight = " + mScreenHeight);
 
         mInitDensity = displayMetrics.density;
@@ -219,6 +236,15 @@ public final class AutoSizeConfig {
         LogUtils.d("initDensity = " + mInitDensity + ", initScaledDensity = " + mInitScaledDensity);
         mActivityLifecycleCallbacks = new ActivityLifecycleCallbacksImpl(strategy == null ? new WrapperAutoAdaptStrategy(new DefaultAutoAdaptStrategy()) : strategy);
         application.registerActivityLifecycleCallbacks(mActivityLifecycleCallbacks);
+        if ("MiuiResources".equals(application.getResources().getClass().getSimpleName()) || "XResources".equals(application.getResources().getClass().getSimpleName())) {
+            isMiui = true;
+            try {
+                mTmpMetricsField = Resources.class.getDeclaredField("mTmpMetrics");
+                mTmpMetricsField.setAccessible(true);
+            } catch (Exception e) {
+                mTmpMetricsField = null;
+            }
+        }
         return this;
     }
 
@@ -394,7 +420,7 @@ public final class AutoSizeConfig {
      * @return {@link #mScreenHeight}
      */
     public int getScreenHeight() {
-        return isUseDeviceSize() ? mScreenHeight : mScreenHeight - ScreenUtils.getStatusBarHeight();
+        return isUseDeviceSize() ? mScreenHeight : mScreenHeight - mStatusBarHeight;
     }
 
     /**
@@ -460,6 +486,24 @@ public final class AutoSizeConfig {
      */
     public boolean isVertical() {
         return isVertical;
+    }
+
+    /**
+     * 返回 {@link #isMiui}
+     *
+     * @return {@link #isMiui}
+     */
+    public boolean isMiui() {
+        return isMiui;
+    }
+
+    /**
+     * 返回 {@link #mTmpMetricsField}
+     *
+     * @return {@link #mTmpMetricsField}
+     */
+    public Field getTmpMetricsField() {
+        return mTmpMetricsField;
     }
 
     /**
@@ -534,6 +578,17 @@ public final class AutoSizeConfig {
     public AutoSizeConfig setDesignHeightInDp(int designHeightInDp) {
         Preconditions.checkArgument(designHeightInDp > 0, "designHeightInDp must be > 0");
         mDesignHeightInDp = designHeightInDp;
+        return this;
+    }
+
+    /**
+     * 设置状态栏高度
+     *
+     * @param statusBarHeight 状态栏高度
+     */
+    public AutoSizeConfig setStatusBarHeight(int statusBarHeight) {
+        Preconditions.checkArgument(statusBarHeight > 0, "statusBarHeight must be > 0");
+        mStatusBarHeight = statusBarHeight;
         return this;
     }
 
