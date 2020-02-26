@@ -59,10 +59,10 @@ public final class AutoSizeCompat {
     }
 
     /**
-     * 使用 {@link Activity} 或 {@link android.support.v4.app.Fragment} 的自定义参数进行适配
+     * 使用 {@link Activity} 或 Fragment 的自定义参数进行适配
      *
      * @param resources   {@link Resources}
-     * @param customAdapt {@link Activity} 或 {@link android.support.v4.app.Fragment} 需实现 {@link CustomAdapt}
+     * @param customAdapt {@link Activity} 或 Fragment 需实现 {@link CustomAdapt}
      */
     public static void autoConvertDensityOfCustomAdapt(Resources resources, CustomAdapt customAdapt) {
         Preconditions.checkNotNull(customAdapt, "customAdapt == null");
@@ -80,10 +80,10 @@ public final class AutoSizeCompat {
     }
 
     /**
-     * 使用外部三方库的 {@link Activity} 或 {@link android.support.v4.app.Fragment} 的自定义适配参数进行适配
+     * 使用外部三方库的 {@link Activity} 或 Fragment 的自定义适配参数进行适配
      *
      * @param resources         {@link Resources}
-     * @param externalAdaptInfo 三方库的 {@link Activity} 或 {@link android.support.v4.app.Fragment} 提供的适配参数, 需要配合 {@link ExternalAdaptManager#addExternalAdaptInfoOfActivity(Class, ExternalAdaptInfo)}
+     * @param externalAdaptInfo 三方库的 {@link Activity} 或 Fragment 提供的适配参数, 需要配合 {@link ExternalAdaptManager#addExternalAdaptInfoOfActivity(Class, ExternalAdaptInfo)}
      */
     public static void autoConvertDensityOfExternalAdaptInfo(Resources resources, ExternalAdaptInfo externalAdaptInfo) {
         Preconditions.checkNotNull(externalAdaptInfo, "externalAdaptInfo == null");
@@ -161,9 +161,13 @@ public final class AutoSizeCompat {
             } else {
                 targetDensity = AutoSizeConfig.getInstance().getScreenHeight() * 1.0f / sizeInDp;
             }
-            float scale = AutoSizeConfig.getInstance().isExcludeFontScale() ? 1 : AutoSizeConfig.getInstance().
-                    getInitScaledDensity() * 1.0f / AutoSizeConfig.getInstance().getInitDensity();
-            targetScaledDensity = targetDensity * scale;
+            if (AutoSizeConfig.getInstance().getPrivateFontScale() > 0) {
+                targetScaledDensity = targetDensity * AutoSizeConfig.getInstance().getPrivateFontScale();
+            } else {
+                float systemFontScale = AutoSizeConfig.getInstance().isExcludeFontScale() ? 1 : AutoSizeConfig.getInstance().
+                        getInitScaledDensity() * 1.0f / AutoSizeConfig.getInstance().getInitDensity();
+                targetScaledDensity = targetDensity * systemFontScale;
+            }
             targetDensityDpi = (int) (targetDensity * 160);
 
             targetScreenWidthDp = (int) (AutoSizeConfig.getInstance().getScreenWidth() / targetDensity);
@@ -224,22 +228,20 @@ public final class AutoSizeCompat {
      * @param xdpi          {@link DisplayMetrics#xdpi}
      */
     private static void setDensity(Resources resources, float density, int densityDpi, float scaledDensity, float xdpi) {
+        DisplayMetrics activityDisplayMetrics = resources.getDisplayMetrics();
+        setDensity(activityDisplayMetrics, density, densityDpi, scaledDensity, xdpi);
+        DisplayMetrics appDisplayMetrics = AutoSizeConfig.getInstance().getApplication().getResources().getDisplayMetrics();
+        setDensity(appDisplayMetrics, density, densityDpi, scaledDensity, xdpi);
+
         //兼容 MIUI
         DisplayMetrics activityDisplayMetricsOnMIUI = getMetricsOnMiui(resources);
         DisplayMetrics appDisplayMetricsOnMIUI = getMetricsOnMiui(AutoSizeConfig.getInstance().getApplication().getResources());
 
         if (activityDisplayMetricsOnMIUI != null) {
             setDensity(activityDisplayMetricsOnMIUI, density, densityDpi, scaledDensity, xdpi);
-        } else {
-            DisplayMetrics activityDisplayMetrics = resources.getDisplayMetrics();
-            setDensity(activityDisplayMetrics, density, densityDpi, scaledDensity, xdpi);
         }
-
         if (appDisplayMetricsOnMIUI != null) {
             setDensity(appDisplayMetricsOnMIUI, density, densityDpi, scaledDensity, xdpi);
-        } else {
-            DisplayMetrics appDisplayMetrics = AutoSizeConfig.getInstance().getApplication().getResources().getDisplayMetrics();
-            setDensity(appDisplayMetrics, density, densityDpi, scaledDensity, xdpi);
         }
     }
 
